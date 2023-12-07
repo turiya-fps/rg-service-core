@@ -1,0 +1,86 @@
+# Validate changes made comply to coding standards and tests pass.
+# Ensures the package can still be built and has expected outputs.
+name: Build
+
+# workflow triggers: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+# context: https://docs.github.com/en/actions/learn-github-actions/contexts
+# github context: https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+
+on:
+  # pull request event: https://docs.github.com/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+env:
+  HUSKY: '0'
+
+jobs:
+
+  # --
+  # -- Verify: Code Standards
+  # --
+
+  verify-code-standards:
+    name: Verify Code Standards
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - run: npm ci --no-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_SERVICE_READ }}
+
+      - run: make code
+
+  # --
+  # -- Verify: Compilation
+  # --
+
+  verify-compilation:
+    name: Verify Compilation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - run: npm ci --no-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_SERVICE_READ }}
+
+      - run: make build
+
+  # --
+  # -- Verify: Tests & Coverage
+  # --
+
+  verify-tests:
+    name: Verify Tests & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - run: npm ci --no-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_SERVICE_READ }}
+
+      - run: make test
